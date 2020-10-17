@@ -6,9 +6,13 @@ class Choice:
         self.id = id
         self.num_votes = 0
         self.percentage = 0
+        self.is_tied = False
 
     def __repr__(self):
         return f"<Choice: {self.id} - {self.percentage}>"
+
+    def __str__(self):
+        return str(self.id) + (" (tied)" if self.is_tied else "")
 
 
 class Vote:
@@ -77,9 +81,10 @@ def main():
         # Is there a winner?
         if leaders and leader_pecentage >= victory_treshold:
             # Yes
-            # print(choices)
-            # print(leaders)
+            tied_for_last_seats = len(winners) + len(leaders) > num_seats
             for leader in leaders:
+                if tied_for_last_seats:
+                    leader.is_tied = True
                 winners.append(choices.pop(leader.id))
             if len(winners) >= num_seats:
                 # All seats filled
@@ -106,7 +111,7 @@ def main():
             choice.percentage = 0
 
     for winner in winners:
-        print(winner.id)
+        print(winner)
 
 
 if __name__ == "__main__":
