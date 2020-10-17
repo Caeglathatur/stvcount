@@ -60,6 +60,7 @@ def condorcet(candidates: typing.List[Candidate], votes: typing.List[Vote]):
     for i, candidate1 in enumerate(candidates):
         for j in range(i + 1, len(candidates)):
             candidate2 = candidates[j]
+            # print(candidate1, candidate2)
             condorcet_pair(candidate1, candidate2, deepcopy(votes))
 
 
@@ -79,11 +80,10 @@ def stv_cle(
 
     condorcet(list(candidates.values()), deepcopy(votes))
 
-    # print(winners)
-    # print(candidates)
-    # print(votes)
-
+    round_ = 0
     while votes:
+        round_ += 1
+
         # Reset tallies
         for candidate in candidates.values():
             candidate.num_votes = 0
@@ -101,10 +101,13 @@ def stv_cle(
         for candidate in candidates.values():
             candidate.percentage = candidate.num_votes / len(votes)
 
-        # print("                 ")
-        # print(winners)
-        # print(candidates)
-        # print(votes)
+        # print(f"                 \n======== ROUND {round_} ========")
+        # print("Candidates:")
+        # for candidate in candidates.values():
+        #     print(f"\t{candidate}\t{candidate.percentage}\t{candidate.condorcet_score}")
+        # print("Votes:")
+        # for vote in votes:
+        #     print(f"\t{vote}")
 
         # Find new winners
         new_winners = []
@@ -120,8 +123,11 @@ def stv_cle(
             if num_tied_for_last > 0:
                 for i in range(num_tied_for_last):
                     new_winners.remove(find_lowest_condorcet(new_winners))
-            for winner in new_winners:
+            for winner in sorted(new_winners, key=lambda c: c.percentage, reverse=True):
                 winners.append(candidates.pop(winner.id))
+            # print("Winners:")
+            # for winner in winners:
+            #     print(f"\t{winner}")
             if len(winners) >= num_seats:
                 # All seats filled
                 break
