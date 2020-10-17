@@ -54,34 +54,40 @@ def main():
         for id, choice in choices.items():
             choice.percentage = choice.num_votes / len(votes)
 
-        print("                 ")
-        print(winners)
-        print(choices)
-        print(votes)
+        # print("                 ")
+        # print(winners)
+        # print(choices)
+        # print(votes)
 
         # Find leader and last place
-        leading_choice = None
-        leading_choice_percentage = 0
+        leaders = []
+        leader_pecentage = 0
         last_choice = None
         last_choice_percentage = 100
         for id, choice in choices.items():
-            if choice.percentage > leading_choice_percentage:
-                leading_choice_percentage = choice.percentage
-                leading_choice = choice
+            if choice.percentage > leader_pecentage:
+                leader_pecentage = choice.percentage
+                leaders = [choice]
+            elif choice.percentage == leader_pecentage:
+                leaders.append(choice)
             if choice.percentage < last_choice_percentage:
                 last_choice_percentage = choice.percentage
                 last_choice = choice
 
         # Is there a winner?
-        if leading_choice and leading_choice_percentage >= victory_treshold:
-            # Yes, remove choice from all votes
-            winners.append(choices.pop(leading_choice.id))
+        if leaders and leader_pecentage >= victory_treshold:
+            # Yes
+            # print(choices)
+            # print(leaders)
+            for leader in leaders:
+                winners.append(choices.pop(leader.id))
             if len(winners) >= num_seats:
                 # All seats filled
                 break
             for vote in votes:
-                if leading_choice.id in vote.choices:
-                    vote.choices.remove(leading_choice.id)
+                for leader in leaders:
+                    if leader.id in vote.choices:
+                        vote.choices.remove(leader.id)
         elif last_choice:
             # No, eliminate lowest scoring
             choices.pop(last_choice.id)
