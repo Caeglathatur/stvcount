@@ -1,4 +1,5 @@
 import sys
+import typing
 
 
 class Choice:
@@ -7,6 +8,7 @@ class Choice:
         self.num_votes = 0
         self.percentage = 0
         self.is_tied = False
+        self.condorcet_score = 0
 
     def __repr__(self):
         return f"<Choice: {self.id} - {self.percentage}>"
@@ -23,28 +25,24 @@ class Vote:
         return f"<Vote: {self.choices}>"
 
 
-def main():
-    num_seats = int(sys.argv[1])
+def condorcet(choice1: Choice, choice2: Choice, votes: typing.List[Vote]):
+    pass
 
-    with open(sys.argv[2]) as input_file:
-        input_rows = input_file.readlines()
 
-    choices_row = input_rows.pop(0).split()
-    votes_rows = [row.split() for row in input_rows]
-
-    choices = {id: Choice(id) for id in choices_row}
-    votes = [Vote(choices) for choices in votes_rows]
-    victory_treshold = 1 / num_seats
-    # print(choices)
-    # print(votes)
-
+def stv(num_seats, choices: typing.List[Choice], votes: typing.List[Vote]):
+    victory_quota = 1 / num_seats
     winners = []
     seats_filled = False
     # print(winners)
     # print(choices)
     # print(votes)
     while not seats_filled and votes:
-        # Count votes
+        # Reset tallies
+        for id, choice in choices.items():
+            choice.num_votes = 0
+            choice.percentage = 0
+
+        # Count votes and calculate percentages
         for vote in votes:
             try:
                 choice_id = vote.choices[0]
@@ -53,8 +51,6 @@ def main():
                     "should never happen; no empty votes should exist here"
                 )
             choices[choice_id].num_votes += 1
-
-        # Calculate percentages
         for id, choice in choices.items():
             choice.percentage = choice.num_votes / len(votes)
 
@@ -79,7 +75,7 @@ def main():
                 last_choice = choice
 
         # Is there a winner?
-        if leaders and leader_pecentage >= victory_treshold:
+        if leaders and leader_pecentage >= victory_quota:
             # Yes
             tied_for_last_seats = len(winners) + len(leaders) > num_seats
             for leader in leaders:
@@ -105,12 +101,22 @@ def main():
         # Remove empty votes
         votes = list(filter(lambda v: len(v.choices) > 0, votes))
 
-        # Reset tallies
-        for id, choice in choices.items():
-            choice.num_votes = 0
-            choice.percentage = 0
+    return winners
 
-    for winner in winners:
+
+def main():
+    num_seats = int(sys.argv[1])
+
+    with open(sys.argv[2]) as input_file:
+        input_rows = input_file.readlines()
+
+    choices_row = input_rows.pop(0).split()
+    votes_rows = [row.split() for row in input_rows]
+
+    choices = {id: Choice(id) for id in choices_row}
+    votes = [Vote(choices) for choices in votes_rows]
+
+    for winner in stv(num_seats, choices, votes):
         print(winner)
 
 
