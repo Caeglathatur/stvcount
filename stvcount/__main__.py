@@ -69,7 +69,11 @@ def find_lowest_condorcet(candidates: typing.List[Candidate]):
     )
 
 
-def stv(num_seats, candidates: typing.Dict[id, Candidate], votes: typing.List[Vote]):
+def stv_cle(
+    num_seats, candidates: typing.Dict[id, Candidate], votes: typing.List[Vote]
+):
+    """Single Transferable Vote with Condorcet Loser Elimination"""
+
     victory_quota = 1 / num_seats
     winners = []
 
@@ -102,34 +106,30 @@ def stv(num_seats, candidates: typing.Dict[id, Candidate], votes: typing.List[Vo
         # print(candidates)
         # print(votes)
 
-        # Find leader and last place
-        leaders = []
-        leader_pecentage = 0
+        # Find new winners
+        new_winners = []
         for candidate in candidates.values():
-            if candidate.percentage > leader_pecentage:
-                leader_pecentage = candidate.percentage
-                leaders = [candidate]
-            elif candidate.percentage == leader_pecentage:
-                leaders.append(candidate)
+            if candidate.percentage >= victory_quota:
+                new_winners.append(candidate)
 
         # Is there a winner?
-        if leaders and leader_pecentage >= victory_quota:
+        if new_winners:
             # Yes
             # Remove excess winners based on condorcet score
-            num_tied_for_last = len(winners) + len(leaders) - num_seats
+            num_tied_for_last = len(winners) + len(new_winners) - num_seats
             if num_tied_for_last > 0:
                 for i in range(num_tied_for_last):
-                    leaders.remove(find_lowest_condorcet(leaders))
-            for leader in leaders:
-                winners.append(candidates.pop(leader.id))
+                    new_winners.remove(find_lowest_condorcet(new_winners))
+            for winner in new_winners:
+                winners.append(candidates.pop(winner.id))
             if len(winners) >= num_seats:
                 # All seats filled
                 break
-            # Remove winners from votes
+            # Remove new winners from votes
             for vote in votes:
-                for leader in leaders:
-                    if leader.id in vote.candidates:
-                        vote.candidates.remove(leader.id)
+                for winner in new_winners:
+                    if winner.id in vote.candidates:
+                        vote.candidates.remove(winner.id)
         else:
             # No, eliminate candidate with lowest condorcet score
             last_candidate = find_lowest_condorcet(candidates.values())
@@ -157,7 +157,7 @@ def main():
     candidates = {id: Candidate(id) for id in candidates_row}
     votes = [Vote(candidates) for candidates in votes_rows]
 
-    for winner in stv(num_seats, candidates, votes):
+    for winner in stv_cle(num_seats, candidates, votes):
         print(winner)
 
 
