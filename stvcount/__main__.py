@@ -7,12 +7,12 @@ class Candidate:
     def __init__(self, id):
         self.id = id
         self.num_votes = 0
-        self.percentage = 0
+        self.proportion_of_votes = 0
         self.is_tied = False
         self.condorcet_score = 0
 
     def __repr__(self):
-        return f"<Candidate: {self.id} - {self.percentage} - {self.condorcet_score}>"
+        return f"<Candidate: {self.id} - {self.proportion_of_votes} - {self.condorcet_score}>"
 
     def __str__(self):
         return str(self.id) + (" (tied)" if self.is_tied else "")
@@ -40,9 +40,9 @@ def condorcet_pair(
     # Reset tallies
     for candidate in candidates.values():
         candidate.num_votes = 0
-        candidate.percentage = 0
+        candidate.proportion_of_votes = 0
 
-    # Count votes and calculate percentages
+    # Count votes and calculate proportions
     for vote in votes:
         try:
             candidate_id = vote.candidates[0]
@@ -87,9 +87,9 @@ def stv_cle(
         # Reset tallies
         for candidate in candidates.values():
             candidate.num_votes = 0
-            candidate.percentage = 0
+            candidate.proportion_of_votes = 0
 
-        # Count votes and calculate percentages
+        # Count votes and calculate proportions
         for vote in votes:
             try:
                 candidate_id = vote.candidates[0]
@@ -99,12 +99,12 @@ def stv_cle(
                 )
             candidates[candidate_id].num_votes += 1
         for candidate in candidates.values():
-            candidate.percentage = candidate.num_votes / len(votes)
+            candidate.proportion_of_votes = candidate.num_votes / len(votes)
 
         # print(f"                 \n======== ROUND {round_} ========")
         # print("Candidates:")
         # for candidate in candidates.values():
-        #     print(f"\t{candidate}\t{candidate.percentage}\t{candidate.condorcet_score}")
+        #     print(f"\t{candidate}\t{candidate.proportion_of_votes}\t{candidate.condorcet_score}")
         # print("Votes:")
         # for vote in votes:
         #     print(f"\t{vote}")
@@ -112,7 +112,7 @@ def stv_cle(
         # Find new winners
         new_winners = []
         for candidate in candidates.values():
-            if candidate.percentage >= victory_quota:
+            if candidate.proportion_of_votes >= victory_quota:
                 new_winners.append(candidate)
 
         # Is there a winner?
@@ -123,7 +123,9 @@ def stv_cle(
             if num_tied_for_last > 0:
                 for i in range(num_tied_for_last):
                     new_winners.remove(find_lowest_condorcet(new_winners))
-            for winner in sorted(new_winners, key=lambda c: c.percentage, reverse=True):
+            for winner in sorted(
+                new_winners, key=lambda c: c.proportion_of_votes, reverse=True
+            ):
                 winners.append(candidates.pop(winner.id))
             # print("Winners:")
             # for winner in winners:
