@@ -8,14 +8,13 @@ class Candidate:
         self.id = id
         self.num_votes = 0
         self.proportion_of_votes = 0
-        self.is_tied = False
         self.condorcet_score = 0
 
     def __repr__(self):
         return f"<Candidate: {self.id} - {self.proportion_of_votes} - {self.condorcet_score}>"
 
     def __str__(self):
-        return str(self.id) + (" (tied)" if self.is_tied else "")
+        return str(self.id)
 
 
 class Vote:
