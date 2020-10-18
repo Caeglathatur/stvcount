@@ -26,6 +26,8 @@ where "input file" is a simple text file where the first row lists all candidate
 3 5 8 6 9 1 2
 ```
 
+The candidate identifiers don't need to be numeric. Any UTF-8 strings without whitespaces will do.
+
 ## License
 
 MIT License
