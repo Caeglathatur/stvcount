@@ -1,3 +1,4 @@
+import re
 import sys
 import typing
 from copy import deepcopy
@@ -159,7 +160,10 @@ def main():
         input_rows = input_file.readlines()
 
     candidates_row = input_rows.pop(0).split()
-    votes_rows = [row.split() for row in input_rows]
+    votes_rows = []
+    for row in input_rows:
+        row = re.sub(r"^.*:\s*", "", row)  # Remove voter label
+        votes_rows.append(row.split())
 
     candidates = {id: Candidate(id) for id in candidates_row}
     votes = [Vote(candidates) for candidates in votes_rows]

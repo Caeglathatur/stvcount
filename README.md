@@ -28,6 +28,12 @@ where "input file" is a simple text file where the first row lists all candidate
 
 The candidate identifiers don't need to be numeric. Any UTF-8 strings without whitespaces will do.
 
+Lines with votes can optionally be labeled. They are just for convenience and are simply ignored by the program.
+
+```
+voter 1: candidate2 candidate1 candidate3
+```
+
 ## License
 
 MIT License
