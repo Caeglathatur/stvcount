@@ -1,3 +1,4 @@
+import argparse
 import re
 import sys
 import typing
@@ -154,9 +155,18 @@ def stv_cle(
 
 
 def main():
-    num_seats = int(sys.argv[1])
+    parser = argparse.ArgumentParser(
+        prog="stvcount", description="Calculate the results of an STV-CLE election."
+    )
+    parser.add_argument(
+        "num_seats", type=int, help="number of seats to fill / winners to pick"
+    )
+    parser.add_argument(
+        "input_file", help="path to input file with candidates and votes"
+    )
+    args = parser.parse_args()
 
-    with open(sys.argv[2]) as input_file:
+    with open(args.input_file) as input_file:
         input_rows = input_file.readlines()
 
     candidates_row = input_rows.pop(0).split()
@@ -168,7 +178,7 @@ def main():
     candidates = {id: Candidate(id) for id in candidates_row}
     votes = [Vote(candidates) for candidates in votes_rows]
 
-    for winner in stv_cle(num_seats, candidates, votes):
+    for winner in stv_cle(args.num_seats, candidates, votes):
         print(winner)
 
 
