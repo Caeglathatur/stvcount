@@ -4,7 +4,6 @@ import sys
 import typing
 from copy import deepcopy
 
-
 EXPLAIN = False
 
 
@@ -88,13 +87,13 @@ def condorcet(candidates: typing.List[Candidate], votes: typing.List[Vote]):
             condorcet_pair(candidate1, candidate2, deepcopy(votes))
 
 
-def find_lowest_condorcet(candidates: typing.List[Candidate]):
+def find_one_with_lowest_condorcet(candidates: typing.List[Candidate]) -> Candidate:
     return (
         sorted(candidates, key=lambda c: c.condorcet_score)[0] if candidates else None
     )
 
 
-def find_lowest_proportion(candidates: typing.List[Candidate]):
+def find_one_with_lowest_proportion(candidates: typing.List[Candidate]) -> Candidate:
     return (
         sorted(candidates, key=lambda c: c.proportion_of_votes)[0]
         if candidates
@@ -102,10 +101,29 @@ def find_lowest_proportion(candidates: typing.List[Candidate]):
     )
 
 
-def stv_cle(
-    num_seats, candidates: typing.Dict[id, Candidate], votes: typing.List[Vote]
-):
-    """Single Transferable Vote with Condorcet Loser Elimination"""
+def find_all_with_lowest_proportion(
+    candidates: typing.List[Candidate],
+) -> typing.List[Candidate]:
+    if not candidates:
+        return []
+    lowest = []
+    lowest_proportion = find_one_with_lowest_proportion(candidates).proportion_of_votes
+    for candidate in candidates:
+        if candidate.proportion_of_votes == lowest_proportion:
+            lowest.append(candidate)
+    return lowest
+
+
+def find_candidate_to_eliminate(candidates: typing.List[Candidate]) -> Candidate:
+    lowest_proportion = find_one_with_lowest_proportion(candidates).proportion_of_votes
+    all_with_lowest_proportion = find_all_with_lowest_proportion(candidates)
+    exclude = find_one_with_lowest_condorcet(all_with_lowest_proportion)
+    assert exclude.proportion_of_votes <= lowest_proportion
+    return exclude
+
+
+def stv(num_seats, candidates: typing.Dict[id, Candidate], votes: typing.List[Vote]):
+    """Single Transferable Vote"""
 
     victory_quota = 1 / num_seats
     winners = []
@@ -159,17 +177,16 @@ def stv_cle(
             num_tied_for_last = len(winners) + len(new_winners) - num_seats
             if num_tied_for_last > 0:
                 explain(
-                    "There are more winners this round than there are seats left. Excluding those with the lowest "
-                    "condorcet scores:"
+                    "There are more winners this round than there are seats left. Eliminating "
+                    "those with the lowest proportions of votes and condorcet scores:"
                 )
                 for i in range(num_tied_for_last):
-                    lowest = find_lowest_condorcet(new_winners)
-                    lowest_proportion = find_lowest_proportion(
-                        new_winners
-                    ).proportion_of_votes
-                    assert lowest.proportion_of_votes <= lowest_proportion
-                    explain(f"\t{lowest}")
-                    new_winners.remove(lowest)
+                    eliminate = find_candidate_to_eliminate(new_winners)
+                    explain(
+                        f"\t{eliminate} (votes={eliminate.proportion_of_votes}, "
+                        f"condorcet={eliminate.condorcet_score})"
+                    )
+                    new_winners.remove(eliminate)
             explain(
                 "The following candidates have been declared winners in this round:"
             )
@@ -190,21 +207,18 @@ def stv_cle(
                         vote.candidates.remove(winner.id)
         else:
             # No, eliminate candidate with lowest condorcet score
-            last_candidate = find_lowest_condorcet(candidates.values())
+            eliminate = find_candidate_to_eliminate(candidates.values())
             explain(
-                f"No candidates meet the victory quota of {victory_quota}. Excluding the "
-                f"candidate with the lowest condorcet score:\n\t{last_candidate.id} "
-                f"({last_candidate.condorcet_score})"
+                f"No candidates meet the victory quota of {victory_quota}. Eliminating the "
+                f"candidate with the lowest proportion of votes and condorcet score:"
+                f"\n\t{eliminate} (votes={eliminate.proportion_of_votes}, "
+                f"condorcet={eliminate.condorcet_score})"
             )
-            lowest_proportion = find_lowest_proportion(
-                candidates.values()
-            ).proportion_of_votes
-            assert last_candidate.proportion_of_votes <= lowest_proportion
-            candidates.pop(last_candidate.id)
-            # Remove excluded from votes
+            candidates.pop(eliminate.id)
+            # Remove eliminated from votes
             for vote in votes:
-                if last_candidate.id in vote.candidates:
-                    vote.candidates.remove(last_candidate.id)
+                if eliminate.id in vote.candidates:
+                    vote.candidates.remove(eliminate.id)
 
         # Remove empty votes
         votes = list(filter(lambda v: len(v.candidates) > 0, votes))
@@ -245,7 +259,7 @@ def main():
     candidates = {id: Candidate(id) for id in candidates_row}
     votes = [Vote(candidates) for candidates in votes_rows]
 
-    winners = stv_cle(args.num_seats, candidates, votes)
+    winners = stv(args.num_seats, candidates, votes)
     explain("                 \n======== WINNERS ========")
     for winner in winners:
         print(winner)

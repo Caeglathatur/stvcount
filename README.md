@@ -1,9 +1,9 @@
 stvcount
 ========
 
-A simple and very rough CLI tool for calculating the results of some half-assed
-interpretation of "Single Transferable Vote with Condorcet Loser Elimination"
-(STV-CLE) elections. Hacked into existence in one evening.
+A simple CLI tool for calculating the results of some interpretation of "Single
+Transferable Vote" (STV) elections. Loser elimination is done based on fewest
+top-choice votes, with condorcet score used as a tiebreaker.
 
 Python 3.8
 
