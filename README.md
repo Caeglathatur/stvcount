@@ -10,7 +10,7 @@ Python 3.8
 ## Usage
 
 ```sh
-python -m stvcount <number of seats> <path to input file>
+python -m stvcount [-h] [--explain] <number of seats> <path to input file>
 ```
 
 where "input file" is a simple text file where the first row lists all candidates, followed by all the votes/ballots, one vote per line, e.g.
@@ -33,6 +33,9 @@ Lines with votes can optionally be labeled. They are just for convenience and ar
 ```
 voter 1: candidate2 candidate1 candidate3
 ```
+
+If the program is run with the flag `--explain`, it will provide a detailed
+step-by-step explanation of how the result was arrived at.
 
 ## License
 
