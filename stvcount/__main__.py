@@ -3,12 +3,12 @@ import re
 import typing
 from copy import deepcopy
 
-EXPLAIN = False
+global_explain = False
 
 
 def explain(string):
-    global EXPLAIN
-    if EXPLAIN:
+    global global_explain
+    if global_explain:
         print(string)
 
 
@@ -250,8 +250,8 @@ def main():
     )
     args = parser.parse_args()
 
-    global EXPLAIN
-    EXPLAIN = args.explain
+    global global_explain
+    global_explain = args.explain
 
     with open(args.input_file) as input_file:
         input_rows = input_file.readlines()
