@@ -38,7 +38,16 @@ class Candidate:
 
 class Vote:
     def __init__(self, candidates: typing.List[str]):
-        self.candidates: typing.List[str] = candidates
+        seen = set()
+        self.candidates: typing.List[str] = []
+        for c in candidates:
+            if c in seen:
+                raise RuntimeError(
+                    f'Found vote in which "{c}" appears more than once: '
+                    f"{' '.join(candidates)}"
+                )
+            seen.add(c)
+            self.candidates.append(c)
 
     def __repr__(self):
         return f"<Vote: {self.candidates}>"
