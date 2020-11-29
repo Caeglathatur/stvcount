@@ -1,6 +1,5 @@
 import argparse
 import re
-import sys
 import typing
 from copy import deepcopy
 
@@ -21,7 +20,10 @@ class Candidate:
         self.condorcet_score = 0
 
     def __repr__(self):
-        return f"<Candidate: {self.id} - {self.proportion_of_votes} - {self.condorcet_score}>"
+        return (
+            f"<Candidate: {self.id} - {self.proportion_of_votes} - "
+            f"{self.condorcet_score}>"
+        )
 
     def __str__(self):
         return str(self.id)
@@ -156,7 +158,8 @@ def stv(num_seats, candidates: typing.Dict[id, Candidate], votes: typing.List[Vo
         explain("\tCandidate\tProportion of votes\tCondorcet score")
         for candidate in candidates.values():
             explain(
-                f"\t{candidate}\t{candidate.proportion_of_votes}\t{candidate.condorcet_score}"
+                f"\t{candidate}\t{candidate.proportion_of_votes}"
+                f"\t{candidate.condorcet_score}"
             )
 
         # Find new winners
@@ -169,7 +172,8 @@ def stv(num_seats, candidates: typing.Dict[id, Candidate], votes: typing.List[Vo
         if new_winners:
             # Yes
             explain(
-                f"{len(new_winners)} candidates meet the victory quota of {victory_quota}:"
+                f"{len(new_winners)} candidates meet the victory quota of "
+                f"{victory_quota}:"
             )
             for winner in new_winners:
                 explain(f"\t{winner.id} ({winner.proportion_of_votes})")
@@ -177,8 +181,9 @@ def stv(num_seats, candidates: typing.Dict[id, Candidate], votes: typing.List[Vo
             num_tied_for_last = len(winners) + len(new_winners) - num_seats
             if num_tied_for_last > 0:
                 explain(
-                    "There are more winners this round than there are seats left. Eliminating "
-                    "those with the lowest proportions of votes and condorcet scores:"
+                    "There are more winners this round than there are seats left. "
+                    "Eliminating those with the lowest proportions of votes and "
+                    "condorcet scores:"
                 )
                 for i in range(num_tied_for_last):
                     eliminate = find_candidate_to_eliminate(new_winners)
@@ -209,9 +214,10 @@ def stv(num_seats, candidates: typing.Dict[id, Candidate], votes: typing.List[Vo
             # No, eliminate candidate with lowest condorcet score
             eliminate = find_candidate_to_eliminate(candidates.values())
             explain(
-                f"No candidates meet the victory quota of {victory_quota}. Eliminating the "
-                f"candidate with the lowest proportion of votes and condorcet score:"
-                f"\n\t{eliminate} (votes={eliminate.proportion_of_votes}, "
+                f"No candidates meet the victory quota of {victory_quota}. "
+                "Eliminating the candidate with the lowest proportion of votes and "
+                f"condorcet score:\n\t{eliminate} "
+                f"(votes={eliminate.proportion_of_votes}, "
                 f"condorcet={eliminate.condorcet_score})"
             )
             candidates.pop(eliminate.id)
