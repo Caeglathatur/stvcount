@@ -3,7 +3,8 @@ stvcount
 
 A simple CLI tool for calculating the results of some interpretation of "Single
 Transferable Vote" (STV) elections. Loser elimination is done based on fewest
-top-choice votes, with condorcet score used as a tiebreaker.
+top-choice votes, with lowest condorcet score used as a primary tiebreaker and
+highest average position in votes used as a secondary tiebreaker.
 
 Python 3.8
 
