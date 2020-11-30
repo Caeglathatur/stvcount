@@ -1,29 +1,18 @@
-import argparse
-import re
 import typing
 from copy import deepcopy
 from statistics import mean
 
-global_explain = False
+from . import Candidate, Vote, explain
 
 
-def explain(string):
-    global global_explain
-    if global_explain:
-        print(string)
-
-
-class Candidate:
+class STVCandidate(Candidate):
     def __init__(self, id):
-        self.id = id
+        super().__init__(id)
         self.num_votes = 0
         self.proportion_of_votes = 0
         self.condorcet_score = 0
         self.avg_index = None
         self.won_in_round = None
-
-    def __repr__(self):
-        return f"<Candidate: {self.id}>"
 
     def __str__(self):
         return (
@@ -39,25 +28,11 @@ class Candidate:
         )
 
 
-class Vote:
-    def __init__(self, candidates: typing.List[str]):
-        seen = set()
-        self.candidates: typing.List[str] = []
-        for c in candidates:
-            if c in seen:
-                raise RuntimeError(
-                    f'Found vote in which "{c}" appears more than once: '
-                    f"{' '.join(candidates)}"
-                )
-            seen.add(c)
-            self.candidates.append(c)
-
-    def __repr__(self):
-        return f"<Vote: {self.candidates}>"
-
-
-def condorcet_pair(
-    candidate1: Candidate, candidate2: Candidate, votes: typing.List[Vote]
+def _condorcet_pair(
+    candidate1: STVCandidate,
+    candidate2: STVCandidate,
+    votes: typing.List[Vote],
+    do_explain,
 ):
     # Remove all candidates from votes for other candidates
     candidates = {candidate1.id: candidate1, candidate2.id: candidate2}
@@ -83,33 +58,40 @@ def condorcet_pair(
     if candidate1.num_votes > candidate2.num_votes:
         explain(
             f"\t{candidate1.id} ({candidate1.num_votes}, WIN)\tvs\t"
-            f"{candidate2.id} ({candidate2.num_votes})"
+            f"{candidate2.id} ({candidate2.num_votes})",
+            do_explain,
         )
         candidate1.condorcet_score += 1
     elif candidate2.num_votes > candidate1.num_votes:
         explain(
             f"\t{candidate1.id} ({candidate1.num_votes})\tvs\t"
-            f"{candidate2.id} ({candidate2.num_votes}, WIN)"
+            f"{candidate2.id} ({candidate2.num_votes}, WIN)",
+            do_explain,
         )
         candidate2.condorcet_score += 1
     else:
         explain(
             f"\t{candidate1.id} ({candidate1.num_votes})\tvs\t"
-            f"{candidate2.id} ({candidate2.num_votes})\tTIED"
+            f"{candidate2.id} ({candidate2.num_votes})\tTIED",
+            do_explain,
         )
 
 
-def condorcet(candidates: typing.List[Candidate], votes: typing.List[Vote]):
-    explain("Condorcet pairings:")
+def _condorcet(
+    candidates: typing.List[STVCandidate], votes: typing.List[Vote], do_explain
+):
+    explain("Condorcet pairings:", do_explain)
     for i, candidate1 in enumerate(candidates):
         for j in range(i + 1, len(candidates)):
             candidate2 = candidates[j]
             # print(candidate1, candidate2)
-            condorcet_pair(candidate1, candidate2, deepcopy(votes))
+            _condorcet_pair(candidate1, candidate2, deepcopy(votes), do_explain)
 
 
-def avg_index(candidates: typing.List[Candidate], votes: typing.List[Vote]):
-    explain("Average indexes (i.e. positions) in votes:")
+def _avg_index(
+    candidates: typing.List[STVCandidate], votes: typing.List[Vote], do_explain
+):
+    explain("Average indexes (i.e. positions) in votes:", do_explain)
     for candidate in candidates:
         candidate_indexes = []
         for vote in votes:
@@ -122,26 +104,31 @@ def avg_index(candidates: typing.List[Candidate], votes: typing.List[Vote]):
                 idx = (idx_of_first_not_listed + idx_of_last_not_listed) / 2
             candidate_indexes.append(idx)
         candidate.avg_index = mean(candidate_indexes)
-        explain(f"\t{candidate.id}\t{candidate.avg_index}")
+        explain(f"\t{candidate.id}\t{candidate.avg_index}", do_explain)
 
 
-def find_candidate_to_eliminate(candidates: typing.List[Candidate]) -> Candidate:
+def _find_candidate_to_eliminate(candidates: typing.List[STVCandidate]) -> STVCandidate:
     return sorted(
         candidates,
         key=lambda c: (c.proportion_of_votes, c.condorcet_score, -c.avg_index),
     )[0]
 
 
-def stv(num_seats, candidates: typing.List[Candidate], votes: typing.List[Vote]):
+def stv(
+    num_seats,
+    candidates: typing.List[Candidate],
+    votes: typing.List[Vote],
+    do_explain=False,
+) -> typing.List[Candidate]:
     """Single Transferable Vote"""
 
-    candidates = {c.id: c for c in candidates}
+    candidates = {c.id: STVCandidate(c.id) for c in candidates}
 
     victory_quota = 1 / num_seats
     winners = []
 
-    avg_index(list(candidates.values()), votes)
-    condorcet(list(candidates.values()), deepcopy(votes))
+    _avg_index(list(candidates.values()), votes, do_explain)
+    _condorcet(list(candidates.values()), deepcopy(votes), do_explain)
 
     round_ = 0
     while votes:
@@ -164,15 +151,15 @@ def stv(num_seats, candidates: typing.List[Candidate], votes: typing.List[Vote])
         for candidate in candidates.values():
             candidate.proportion_of_votes = candidate.num_votes / len(votes)
 
-        explain(f"                 \n======== ROUND {round_} ========")
-        explain("Standings:")
+        explain(f"                 \n======== ROUND {round_} ========", do_explain)
+        explain("Standings:", do_explain)
         # explain("\tCandidate\tProportion of votes\tCondorcet score\tAverage index")
         for candidate in sorted(
             candidates.values(),
             key=lambda c: (c.proportion_of_votes, c.condorcet_score, -c.avg_index),
             reverse=True,
         ):
-            explain(f"\t{candidate}")
+            explain(f"\t{candidate}", do_explain)
 
         # Find new winners
         new_winners = []
@@ -185,24 +172,27 @@ def stv(num_seats, candidates: typing.List[Candidate], votes: typing.List[Vote])
             # Yes
             explain(
                 f"{len(new_winners)} candidates meet the victory quota of "
-                f"{victory_quota}:"
+                f"{victory_quota}:",
+                do_explain,
             )
             for winner in new_winners:
-                explain(f"\t{winner}")
+                explain(f"\t{winner}", do_explain)
             # Remove excess winners based on condorcet score
             num_tied_for_last = len(winners) + len(new_winners) - num_seats
             if num_tied_for_last > 0:
                 explain(
                     "There are more winners this round than there are seats left. "
                     "Eliminating those with the lowest proportions of votes, "
-                    "lowest condorcet scores and highest average indexes:"
+                    "lowest condorcet scores and highest average indexes:",
+                    do_explain,
                 )
                 for i in range(num_tied_for_last):
-                    eliminate = find_candidate_to_eliminate(new_winners)
-                    explain(f"\t{eliminate}")
+                    eliminate = _find_candidate_to_eliminate(new_winners)
+                    explain(f"\t{eliminate}", do_explain)
                     new_winners.remove(eliminate)
             explain(
-                "The following candidates have been declared winners in this round:"
+                "The following candidates have been declared winners in this round:",
+                do_explain,
             )
             for winner in sorted(
                 new_winners,
@@ -210,12 +200,12 @@ def stv(num_seats, candidates: typing.List[Candidate], votes: typing.List[Vote])
                 reverse=True,
             ):
                 winners.append(candidates.pop(winner.id))
-                explain(f"\t{winner}")
+                explain(f"\t{winner}", do_explain)
                 winner.won_in_round = round_
 
             if len(winners) >= num_seats:
                 # All seats filled
-                explain(f"All {num_seats} seats have been filled.")
+                explain(f"All {num_seats} seats have been filled.", do_explain)
                 break
             # Remove new winners from votes
             for vote in votes:
@@ -224,12 +214,13 @@ def stv(num_seats, candidates: typing.List[Candidate], votes: typing.List[Vote])
                         vote.candidates.remove(winner.id)
         else:
             # No, eliminate candidate with lowest condorcet score
-            eliminate = find_candidate_to_eliminate(candidates.values())
+            eliminate = _find_candidate_to_eliminate(candidates.values())
             explain(
                 f"No candidates meet the victory quota of {victory_quota}. "
                 "Eliminating the candidate with the lowest proportion of votes, "
                 f"lowest condorcet score and highest average index:\n"
-                f"\t{eliminate}"
+                f"\t{eliminate}",
+                do_explain,
             )
             candidates.pop(eliminate.id)
             # Remove eliminated from votes
@@ -240,47 +231,23 @@ def stv(num_seats, candidates: typing.List[Candidate], votes: typing.List[Vote])
         # Remove empty votes
         votes = list(filter(lambda v: len(v.candidates) > 0, votes))
         explain(
-            f"{num_seats - len(winners)} of {num_seats} seats are still to be filled."
+            f"{num_seats - len(winners)} of {num_seats} seats are still to be filled.",
+            do_explain,
         )
 
+    if len(candidates) <= num_seats - len(winners):
+        explain(
+            "Remaining candidates cannot meet the quota, but since there are enough "
+            "seats left for them, they will be declared winners:",
+            do_explain,
+        )
+        for candidate in sorted(
+            candidates.values(),
+            key=lambda c: (c.proportion_of_votes, c.condorcet_score, -c.avg_index),
+            reverse=True,
+        ):
+            winners.append(candidates.pop(candidate.id))
+            explain(f"\t{candidate}", do_explain)
+            candidate.won_in_round = round_
+
     return winners
-
-
-def main():
-    parser = argparse.ArgumentParser(
-        prog="stvcount", description="Calculate the results of an STV-CLE election."
-    )
-    parser.add_argument(
-        "num_seats", type=int, help="number of seats to fill / winners to pick"
-    )
-    parser.add_argument(
-        "input_file", help="path to input file with candidates and votes"
-    )
-    parser.add_argument(
-        "--explain", action="store_true", help="explain how the result was arrived at"
-    )
-    args = parser.parse_args()
-
-    global global_explain
-    global_explain = args.explain
-
-    with open(args.input_file) as input_file:
-        input_rows = input_file.readlines()
-
-    candidates_row = input_rows.pop(0).split()
-    votes_rows = []
-    for row in input_rows:
-        row = re.sub(r"^.*:\s*", "", row)  # Remove voter label
-        votes_rows.append(row.split())
-
-    candidates = [Candidate(id) for id in candidates_row]
-    votes = [Vote(candidates) for candidates in votes_rows]
-
-    winners = stv(args.num_seats, candidates, votes)
-    explain("                 \n======== WINNERS ========")
-    for winner in winners:
-        print(winner if global_explain else winner.id)
-
-
-if __name__ == "__main__":
-    main()

@@ -1,6 +1,8 @@
 import unittest
-from .__main__ import stv, Candidate, Vote
 from copy import deepcopy
+
+from . import Candidate, Vote
+from .stv import stv
 
 
 class STVTest(unittest.TestCase):

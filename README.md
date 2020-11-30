@@ -1,5 +1,5 @@
-stvcount
-========
+votecount
+=========
 
 A simple CLI tool for calculating the results of some interpretation of "Single
 Transferable Vote" (STV) elections. Loser elimination is done based on fewest
@@ -11,7 +11,7 @@ Python 3.8
 ## Usage
 
 ```sh
-python -m stvcount [-h] [--explain] <number of seats> <path to input file>
+python -m votecount [-h] [--explain] <system> <number of seats> <path to input file>
 ```
 
 where "input file" is a simple text file where the first row lists all candidates, followed by all the votes/ballots, one vote per line, e.g.
@@ -41,7 +41,7 @@ step-by-step explanation of how the result was arrived at.
 ## Run tests
 
 ```sh
-python -m stvcount.tests
+python -m votecount.tests
 ```
 
 ## License
