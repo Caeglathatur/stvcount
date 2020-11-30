@@ -20,12 +20,10 @@ class Candidate:
         self.proportion_of_votes = 0
         self.condorcet_score = 0
         self.avg_index = None
+        self.won_in_round = None
 
     def __repr__(self):
-        return (
-            f"<Candidate: {self.id} - {self.proportion_of_votes} - "
-            f"{self.condorcet_score}>"
-        )
+        return f"<Candidate: {self.id}>"
 
     def __str__(self):
         return (
@@ -33,6 +31,11 @@ class Candidate:
             f"\tvotes={self.proportion_of_votes}"
             f"\tcondorcet={self.condorcet_score}"
             f"\tavg_index={self.avg_index}"
+            + (
+                f"\twon_in_round={self.won_in_round}"
+                if self.won_in_round is not None
+                else ""
+            )
         )
 
 
@@ -129,8 +132,10 @@ def find_candidate_to_eliminate(candidates: typing.List[Candidate]) -> Candidate
     )[0]
 
 
-def stv(num_seats, candidates: typing.Dict[id, Candidate], votes: typing.List[Vote]):
+def stv(num_seats, candidates: typing.List[Candidate], votes: typing.List[Vote]):
     """Single Transferable Vote"""
+
+    candidates = {c.id: c for c in candidates}
 
     victory_quota = 1 / num_seats
     winners = []
@@ -162,7 +167,11 @@ def stv(num_seats, candidates: typing.Dict[id, Candidate], votes: typing.List[Vo
         explain(f"                 \n======== ROUND {round_} ========")
         explain("Standings:")
         # explain("\tCandidate\tProportion of votes\tCondorcet score\tAverage index")
-        for candidate in candidates.values():
+        for candidate in sorted(
+            candidates.values(),
+            key=lambda c: (c.proportion_of_votes, c.condorcet_score, -c.avg_index),
+            reverse=True,
+        ):
             explain(f"\t{candidate}")
 
         # Find new winners
@@ -196,10 +205,13 @@ def stv(num_seats, candidates: typing.Dict[id, Candidate], votes: typing.List[Vo
                 "The following candidates have been declared winners in this round:"
             )
             for winner in sorted(
-                new_winners, key=lambda c: c.proportion_of_votes, reverse=True
+                new_winners,
+                key=lambda c: (c.proportion_of_votes, c.condorcet_score, -c.avg_index),
+                reverse=True,
             ):
                 winners.append(candidates.pop(winner.id))
                 explain(f"\t{winner}")
+                winner.won_in_round = round_
 
             if len(winners) >= num_seats:
                 # All seats filled
@@ -261,13 +273,13 @@ def main():
         row = re.sub(r"^.*:\s*", "", row)  # Remove voter label
         votes_rows.append(row.split())
 
-    candidates = {id: Candidate(id) for id in candidates_row}
+    candidates = [Candidate(id) for id in candidates_row]
     votes = [Vote(candidates) for candidates in votes_rows]
 
     winners = stv(args.num_seats, candidates, votes)
     explain("                 \n======== WINNERS ========")
     for winner in winners:
-        print(winner.id)
+        print(winner if global_explain else winner.id)
 
 
 if __name__ == "__main__":

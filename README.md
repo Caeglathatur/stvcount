@@ -38,6 +38,12 @@ voter 1: candidate2 candidate1 candidate3
 If the program is run with the flag `--explain`, it will provide a detailed
 step-by-step explanation of how the result was arrived at.
 
+## Run tests
+
+```sh
+python -m stvcount.tests
+```
+
 ## License
 
 MIT License
