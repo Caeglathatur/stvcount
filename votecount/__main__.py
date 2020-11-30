@@ -15,13 +15,24 @@ def main():
         "system", type=str, help="Vote counting system. One of stv, borda, dowdall."
     )
     parser.add_argument(
-        "num_seats", type=int, help="number of seats to fill / winners to pick"
+        "num_seats",
+        type=int,
+        help=(
+            "Number of seats to fill / winners to pick. Ignored for some "
+            "voting systems"
+        ),
     )
     parser.add_argument(
         "input_file", help="path to input file with candidates and votes"
     )
     parser.add_argument(
         "--explain", action="store_true", help="explain how the result was arrived at"
+    )
+    parser.add_argument(
+        "--max-per-vote",
+        type=int,
+        help="Limit the number of listed candidates per vote. Ignored for some "
+        "voting systems.",
     )
     args = parser.parse_args()
 
@@ -39,7 +50,13 @@ def main():
 
     system_func = {"stv": stv, "borda": borda, "dowdall": dowdall}[args.system]
 
-    winners = system_func(args.num_seats, candidates, votes, do_explain=args.explain)
+    winners = system_func(
+        args.num_seats,
+        candidates,
+        votes,
+        do_explain=args.explain,
+        max_per_vote=args.max_per_vote,
+    )
     explain("                 \n======== WINNERS ========", args.explain)
     for winner in winners:
         print(winner if args.explain else winner.id)

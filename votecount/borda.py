@@ -17,10 +17,11 @@ def borda(
     candidates: typing.List[Candidate],
     votes: typing.List[Vote],
     do_explain=False,
+    **kwargs,
 ) -> typing.List[Candidate]:
     """Borda Count"""
 
-    max_points = len(candidates)
+    max_points = kwargs.get("max_per_vote", None) or len(candidates)
     candidates = {c.id: BordaCandidate(c.id) for c in candidates}
     vote_nr = 0
     for vote in votes:
@@ -33,6 +34,8 @@ def borda(
         for v_candidate in vote.candidates:
             candidates[v_candidate].points += assign_points
             assign_points -= 1
+            if assign_points <= 0:
+                break
         for candidate in sorted(
             candidates.values(), key=lambda c: c.points, reverse=True
         ):

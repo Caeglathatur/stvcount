@@ -17,8 +17,9 @@ def dowdall(
     candidates: typing.List[Candidate],
     votes: typing.List[Vote],
     do_explain=False,
+    **kwargs,
 ) -> typing.List[Candidate]:
-    """Borda Count"""
+    """Dowdall Count (Borda with a more pluralistic weighting of preferences)"""
 
     candidates = {c.id: DowdallCandidate(c.id) for c in candidates}
     vote_nr = 0
