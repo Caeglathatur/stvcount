@@ -3,6 +3,7 @@ import re
 
 from . import Candidate, Vote, explain
 from .borda import borda
+from .borda_exp import borda_exp
 from .dowdall import dowdall
 from .stv import stv
 
@@ -12,7 +13,9 @@ def main():
         prog="votecount", description="Calculate the results of an STV-CLE election."
     )
     parser.add_argument(
-        "system", type=str, help="Vote counting system. One of stv, borda, dowdall."
+        "system",
+        type=str,
+        help="Vote counting system. One of stv, borda, borda_exp, dowdall.",
     )
     parser.add_argument(
         "num_seats",
@@ -34,6 +37,14 @@ def main():
         help="Limit the number of listed candidates per vote. Ignored for some "
         "voting systems.",
     )
+    parser.add_argument(
+        "--weight",
+        type=float,
+        help=(
+            "Custom weighting factor for voting systems such as borda_exp. "
+            "Intended to be <1."
+        ),
+    )
     args = parser.parse_args()
 
     with open(args.input_file) as input_file:
@@ -48,7 +59,12 @@ def main():
     candidates = [Candidate(id) for id in candidates_row]
     votes = [Vote(candidates) for candidates in votes_rows]
 
-    system_func = {"stv": stv, "borda": borda, "dowdall": dowdall}[args.system]
+    system_func = {
+        "stv": stv,
+        "borda": borda,
+        "dowdall": dowdall,
+        "borda_exp": borda_exp,
+    }[args.system]
 
     winners = system_func(
         args.num_seats,
@@ -56,6 +72,7 @@ def main():
         votes,
         do_explain=args.explain,
         max_per_vote=args.max_per_vote,
+        weight=args.weight,
     )
     explain("                 \n======== WINNERS ========", args.explain)
     for winner in winners:
