@@ -6,10 +6,19 @@ from . import Candidate, Vote, explain
 class BordaCandidate(Candidate):
     def __init__(self, id):
         self.id = id
-        self.points = 0
+        self._points = 0
+        self.last_add = None
 
     def __str__(self):
-        return f"{self.id}" f"\tpoints={self.points}"
+        return f"{self.id}" f"\tpoints={self.points}\tlast_add={self.last_add}"
+
+    @property
+    def points(self):
+        return self._points
+
+    def add_points(self, points):
+        self.last_add = points
+        self._points += points
 
 
 def borda(
@@ -30,11 +39,13 @@ def borda(
             f"                 \n======== Standings at vote {vote_nr} ========",
             do_explain,
         )
-        assign_points = max_points
+        points = max_points
+        for c in candidates.values():
+            c.last_add = 0
         for v_candidate in vote.candidates:
-            candidates[v_candidate].points += assign_points
-            assign_points -= 1
-            if assign_points <= 0:
+            candidates[v_candidate].add_points(points)
+            points -= 1
+            if points <= 0:
                 break
         for candidate in sorted(
             candidates.values(), key=lambda c: c.points, reverse=True
