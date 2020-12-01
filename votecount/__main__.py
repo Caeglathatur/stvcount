@@ -5,6 +5,7 @@ from . import Candidate, Vote, explain
 from .borda import borda
 from .borda_even import borda_even
 from .borda_exp import borda_exp
+from .condorcet import condorcet
 from .dowdall import dowdall
 from .stv import stv
 
@@ -17,7 +18,10 @@ def main():
     parser.add_argument(
         "system",
         type=str,
-        help="Vote counting system. One of stv, borda, borda_exp, dowdall.",
+        help=(
+            "Vote counting system. One of stv, borda, borda_exp, borda_even, "
+            "condorcet, dowdall."
+        ),
     )
     parser.add_argument(
         "num_seats",
@@ -67,6 +71,7 @@ def main():
         "dowdall": dowdall,
         "borda_exp": borda_exp,
         "borda_even": borda_even,
+        "condorcet": condorcet,
     }[args.system]
 
     winners = system_func(
