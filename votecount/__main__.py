@@ -3,6 +3,7 @@ import re
 
 from . import Candidate, Vote, explain
 from .borda import borda
+from .borda_even import borda_even
 from .borda_exp import borda_exp
 from .dowdall import dowdall
 from .stv import stv
@@ -64,6 +65,7 @@ def main():
         "borda": borda,
         "dowdall": dowdall,
         "borda_exp": borda_exp,
+        "borda_even": borda_even,
     }[args.system]
 
     winners = system_func(
@@ -74,7 +76,7 @@ def main():
         max_per_vote=args.max_per_vote,
         weight=args.weight,
     )
-    explain("                 \n======== WINNERS ========", args.explain)
+    explain("                 \n======== RESULTS ========", args.explain)
     for winner in winners:
         print(winner if args.explain else winner.id)
 
