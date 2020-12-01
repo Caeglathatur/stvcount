@@ -11,7 +11,8 @@ from .stv import stv
 
 def main():
     parser = argparse.ArgumentParser(
-        prog="votecount", description="Calculate the results of an STV-CLE election."
+        prog="votecount",
+        description="Calculate the results of a ranked voting election.",
     )
     parser.add_argument(
         "system",
