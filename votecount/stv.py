@@ -236,7 +236,8 @@ def stv(
             do_explain,
         )
 
-    if len(candidates) <= num_seats - len(winners):
+    seats_left = num_seats - len(winners)
+    if seats_left > 0 and len(candidates) <= seats_left:
         explain(
             "Remaining candidates cannot meet the quota, but since there are enough "
             "seats left for them, they will be declared winners:",
@@ -250,5 +251,43 @@ def stv(
             winners.append(candidates.pop(candidate.id))
             explain(f"\t{candidate}", do_explain)
             candidate.won_in_round = round_
+
+    return winners
+
+
+def stv_repeat(
+    num_seats,
+    candidates: typing.List[Candidate],
+    votes: typing.List[Vote],
+    do_explain=False,
+    **kwargs,
+) -> typing.List[Candidate]:
+    """Single Transferable Vote count, but repeated num_seats times with
+    num_seats=1, each time excluding the newest winner from the next run.
+    """
+
+    winners = []
+    candidates = {c.id: c for c in candidates}
+
+    for i in range(num_seats):
+        explain(
+            f"                 \n======== STV META ROUND {i+1} ========", do_explain
+        )
+        winner = stv(
+            num_seats=1,
+            candidates=list(deepcopy(candidates).values()),
+            votes=deepcopy(votes),
+            do_explain=do_explain,
+        )[0]
+        winners.append(winner)
+        explain(f"STV META ROUND WINNER: {winner.id}", do_explain)
+        # Remove winner from candidates and votes
+        if winner.id in candidates:
+            candidates.pop(winner.id)
+            for vote in votes:
+                if winner.id in vote.candidates:
+                    vote.candidates.remove(winner.id)
+            # Remove empty votes
+            votes = list(filter(lambda v: len(v.candidates) > 0, votes))
 
     return winners

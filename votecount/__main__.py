@@ -7,7 +7,7 @@ from .borda_even import borda_even
 from .borda_exp import borda_exp
 from .condorcet import condorcet
 from .dowdall import dowdall
-from .stv import stv
+from .stv import stv, stv_repeat
 
 
 def main():
@@ -19,8 +19,8 @@ def main():
         "system",
         type=str,
         help=(
-            "Vote counting system. One of stv, borda, borda_exp, borda_even, "
-            "condorcet, dowdall."
+            "Vote counting system. One of stv, stv_repeat, borda, borda_exp, "
+            "borda_even, condorcet, dowdall."
         ),
     )
     parser.add_argument(
@@ -67,6 +67,7 @@ def main():
 
     system_func = {
         "stv": stv,
+        "stv_repeat": stv_repeat,
         "borda": borda,
         "dowdall": dowdall,
         "borda_exp": borda_exp,
